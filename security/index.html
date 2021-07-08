@@ -1,0 +1,120 @@
+<head>
+<title>Lab 13: Security and Privacy Assessment of Ride-Hailing Service</title>
+<link rel="stylesheet" type="text/css" href="style.css"></link>
+</head>
+<body>
+<h1>Security Assessment and Findings</h1>
+<h2>Introduction</h2>
+<hr>
+<p><b>Not Uber</b> is a Ride-Hailing service that allows users call upon rides from strangers to get to their destination. I'm a security consultant hired by <b>Not Uber</b> to analyze and conduct tests and perform a security assement on the <b>Not Uber</b> System </p>
+<h2>Methodology</h2>
+<hr>
+<p>The tools that I used were curl, the web Safari Browser for Mac OS X, and the Chrome Web Browser for Mac OS X. The operating system and device was my own personal laptop running Mac OS X Catalina. In terms of testing I analyzed the source code and tried to come up with exploits from the flaws that I saw. The server which it is hosted on is through Heroku. </p>
+<h2>Abstractions of Findings</h2>
+<hr>
+<p>In my findings I have found many vulnerabilities such as being able to retrieve all passenger info from the Postgre SQL Database, the ability to have scripts inserted into the server HTML response pages, and ability to tamper with the server site.</p>
+<h2>Issues Found</h2>
+<hr>
+<h3>Issue 1: Being able to manipulate the server site</h3>
+    <ul> 
+    <li> <p><b>Issue:</b> The <a href="https://jordan-marsh.herokuapp.com/">https://jordan-marsh.herokuapp.com/</a> site was easily able to be manipulated and changed so content on the site could be added such as images or videos.</p></li>
+    <li><p><b>Location:</b>  <code> app.get('/', function(request, response)</code> and <code>app.post('/rides', function(request, response)</code></p></li>
+    <li><p><b>Severity:</b> <i> Low / Medium </i> depending on objective. If it is just inserting a funny image then it would be classified as <b>low</b>, but if the intent was to insert a link in which the user clicks on and redirects to a unknown website then I would classify that as a <b>medium</b> threat.</p></li>
+    <li><p><b>Description of Issue: </b>
+    <img src="anythingData.png" width="900" height="300" alt="data" >
+    <p>In the image above you can see that information that is retrieved from the client under the username can be <b>anything</b> since its only checking if there exists a string. This is then stored into the database. If this string was code then code would be stored within the database</p>
+    <img src="showingAnything.png" width="900" height="300" alt="data">
+    <p>The image above shows that it is retriving the data above from the database, if the information stored was <b>html code</b> in a string then the html could have images tags or videos embeded so it would render the videos or images that we had put in there prior and then it is sent as a response back and rendered into html.</p>
+    </p></li> 
+    <p><b>Proof of Vulnerability:</b></p> 
+    <p><b>Example 1:</b></p>
+    <hr>
+    <img src="dataChange1.png" width="700" height="500" alt="data">
+   <hr>
+   <p><b>Example 2:</b></p>
+    <img src="dataChange2.png" width="800" height="200" alt="data">
+    <p>Based off <b>examples 1</b> and <b>example 2</b> I demonstrate that you can embed Spotify playlist's, YouTube videos, images, and your own HTML code</p>
+    <hr>
+    <p>Curl command <b>(Embed the Youtube video)</b></p>
+    <code>
+        curl -X POST -d 'username=&lt;iframe width="560" height="315" src="https://www.youtube.com/embed/iLycuRm1V0Q" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen&gt;&lt;/iframe&gt;' -d 'lat=123' -d 'lng=123' https://jordan-marsh.herokuapp.com/rides
+    </code>
+    <hr>
+    <p>Curl command <b>(Embed the Spotify playlist)</b></p>
+    <code>
+        curl -X POST -d 'username=&lt;iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DXaPCIWxzZwR1" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"&gt;&lt;/iframe&gt;' -d 'lat=123' -d 'lng=123' https://jordan-marsh.herokuapp.com/rides
+    </code>
+    <hr>
+    <p>Curl command <b>(Manipulate Content)</b></p>
+    <code>
+        curl -X POST -d 'username=&lt;h1&gt;hhi&lt;/h1&gt;' -d 'lat=123' -d 'lng=123' https://jordan-marsh.herokuapp.com/rides
+    </code>
+    <li><b>Resolution:</b> To solve this issue filter the input so that you do not have &lt; or &gt; brackets so that there wont be any html code that will be stored into the database. This can be done using "& lt;" and "& gt;"</li>
+</ul>
+<h3>Issue 2: Stored XSS attacks</h3>
+<ul>
+<li> <p><b>Issue:</b> The <a href="https://jordan-marsh.herokuapp.com/">https://jordan-marsh.herokuapp.com/</a> site was easily manipulated so that scripts can be embedded in the site.</p></li>
+<li><p><b>Location:</b>  <code> app.get('/', function(request, response)</code> and <code>app.post('/rides', function(request, response)</code></p></li>
+<li><p><b>Severity:</b> <i> High </i> and is a major issue because if scripts can be embedded into the website and ran than the code itself can be malicious and cause harm to the user.</p></li>
+<li><p><b>Description of Issue: </b>
+<img src="anythingData.png" width="900" height="300" alt="data" >
+<p>In the image above you can see that information that is retrieved from the client under the username can be <b>anything</b> since its only checking if there exists a string. This is then stored into the database. If this string was code then code would be stored within the database. This issue is similar to the issue prior but instead of embedding images or videos we are embedding a <b>script</b>.</p>
+<img src="showingAnything.png" width="900" height="300" alt="data">
+<p>The image above shows that it is retriving the data above from the database, if the information stored was html code with a <b>script tag</b> in a string then the html could have <b>scripts</b> so it would be able to run <b>scripts</b> that we had put in there prior and then it is sent as a response back and the <b>script</b> can be ran.</p>
+</p></li> 
+<p><b>Proof of Vulnerability:</b></p> 
+<p><b>Example: (Before)</b></p>
+<hr>
+<img src="beforeScript.png" width="1500" height="80" alt="data">
+<hr>
+<p><b>Example: (After)</b></p>
+<img src="afterScript.png" width="900" height="150" alt="data">
+<p>Based off <b>Example: (Before)</b> and <b>Example: (After)</b> I demonstrate that you can embed a script into the website and once the button is clicked it sets off a javascript script which displays the latitude of your location.</p>
+<hr>
+<p>Curl command <b> (Embedded Script)</b></p>
+<code>
+    curl -X POST -d 'username=&lt;button onclick="getLocation()"&gt;&lt;/button&gt;
+    &lt;p id="demo"&gt;&lt;/p&gt;
+    &lt;script&gt;
+    var x = document.getElementById("demo");
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition);
+      } else { 
+        x.innerHTML = "Geolocation is not supported by this browser.";
+      }
+    }
+    function showPosition(position) {
+      x.innerHTML = position.coords.latitude;
+    }
+    &lt;/script&gt;' -d 'lat=123' -d 'lng=123' https://jordan-marsh.herokuapp.com/rides
+</code>
+<p>In this example from the curl command I got the geo location of the user's location and was able to post the latitude location of the user from this script </p>
+<li><b>Resolution:</b> Similar to the issue from before in order to solve this issue filter the input so that you do not have &lt; or &gt; brackets so that there wont be any html code script codes won't be stored into the database. This can be done using "& lt;" and "& gt;"</li>
+</ul>
+<h3>Issue 3: SQL Injection</h3>
+<ul>
+<li> <p><b>Issue:</b> The <a href="https://jordan-marsh.herokuapp.com/passenger.json">https://jordan-marsh.herokuapp.com/passenger.json</a> site was easily manipulated so that a SQL query can be injected and manipulated to return all the passengers in the database.</p></li>
+<li><p><b>Location:</b>  <code> app.get('/passenger.json', function(request, response)</code> </p></li>
+<li><p><b>Severity:</b> <i> High </i> and is a major issue because the user data can be exposed and is a major breach in privacy</p></li>
+<li><p><b>Description of Issue: </b>
+<img src="queryInjection.png" width="900" height="300" alt="data" >
+<p>In the image above you can see where the query from the user is used in order to look up the specific user from the table, but what can go wrong is that a user can input a SQL query into where "usernameEntry" is and retrieve all the data from the table.</p>
+<p><b>Proof of Vulnerability:</b></p> 
+<hr>
+<p><b>Example: (SQL Injection)</b></p>
+<img src="sqlInject.png" width="900" height="300" alt="data" >
+<p>Based off <b> Example: (SQL Injection)</b> I demonstrated that you are able to retrieve all the passenger data from the passenger table by injecting SQL query in where "username" would be in the request.</b> </p>
+<hr> 
+<p>To accomplish this I injected this command within the username entry where ' or ''=' so that I could the query will always be True and when completing the query it will show all the passenger data. Once I was able to see that it was in the database by visiting <a href="https://jordan-marsh.herokuapp.com/">https://jordan-marsh.herokuapp.com/</a> I then went to https://jordan-marsh.herokuapp.com/passenger.json?username=' or ''=' where all the passenger data now is displayed</p>
+<p>Curl command <b> (SQL Inject)</b></p>
+<code>
+    curl -X POST -d "username=' or ''='&lat=123&lng=104" https://jordan-marsh.herokuapp.com/rides
+</code>
+<li><b>Resolution:</b> One way to protect yourself from SQL injections is using paramaterize statments. Paramaterizing your statments means that you check your parameters/inputs are safe to query. In the case of this server you would want to paramaterize "username" and have that passed in separatly once checked so that the input is not directly modifying the database.</li>
+</ul>
+<h2>Conclusion</h2>
+<p>To conclude one key important factor in this lab is to check user input and never trust user input because of these attacks. More recommendations would include tests by multiple people to discover more vulnerabilities as more pairs of eyes look at the code the more vulnerabilities could be discovered and patched.</p>
+
+
+</body> 
